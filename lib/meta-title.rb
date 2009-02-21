@@ -24,7 +24,6 @@ def title_x(uri)
         x.request(req)
     }
     puts res.code
-    puts res.content_length
 
     puts "GET"
     req = Net::HTTP::Get.new(url.path)
@@ -35,10 +34,22 @@ def title_x(uri)
     puts res.code
     puts res.content_type
     body = res.body
-    end
 
     # some formats need the end of the file as well
-    # how should we decide which those are?
+    # small hardcoded list will do for now
+    need_end = ['audio/mpeg'].grep res.content_type
+    if need_end.size > 0 then
+	    puts "GET"
+	    req = Net::HTTP::Get.new(url.path)
+	    req.set_range(-16384)
+	    p req
+	    endres = Net::HTTP.start(url.host, url.port) {|x|
+	        x.request(req)
+	    }
+	    puts endres.code
+        body = body + endres.body
+    end
+
 
     # write the body to a tempfile
     Tempfile.open('lnkylnky', '/tmp') { |t|
