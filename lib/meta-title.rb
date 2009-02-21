@@ -3,6 +3,7 @@ require 'open-uri'
 require 'rubygems'
 require 'extractor'
 require 'tempfile'
+require 'curb'
 
 def title(uri)
     x=''
@@ -15,39 +16,30 @@ end
 
 def title_x(uri)
     p uri
-    puts "HEAD"
-    z = ''
-    url = URI.parse(uri)
-    req = Net::HTTP::Head.new(url.path)
-#    req.set_range(0, 119)
-    res = Net::HTTP.start(url.host, url.port) {|x|
-        x.request(req)
-    }
-    puts res.code
+    real_size = -34
 
-    puts "GET"
-    req = Net::HTTP::Get.new(url.path)
-    req.set_range(0, 16383)
-    res = Net::HTTP.start(url.host, url.port) {|x|
-        x.request(req)
+    curl = Curl::Easy.new
+    curl.url = uri
+    curl.headers['Range'] = 'bytes=0-16383'
+    curl.follow_location = true
+    curl.perform
+    body = curl.body_str
+    curl.header_str.split(/\r\n/).grep(/^Content-Range/).each { |x|
+        y = x.scan(%r{^.*bytes (\d+)-(\d+)(?:/(\d+))?})
+        if y[0] and y[0][2] then
+            real_size = y[0][2]
+        end
     }
-    puts res.code
-    puts res.content_type
-    body = res.body
+    puts real_size
 
     # some formats need the end of the file as well
     # small hardcoded list will do for now
-    need_end = ['audio/mpeg'].grep res.content_type
+    need_end = ['audio/mpeg'].grep curl.content_type
     if need_end.size > 0 then
-	    puts "GET"
-	    req = Net::HTTP::Get.new(url.path)
-	    req.set_range(-16384)
-	    p req
-	    endres = Net::HTTP.start(url.host, url.port) {|x|
-	        x.request(req)
-	    }
-	    puts endres.code
-        body = body + endres.body
+	    curl.headers['Range'] = 'bytes=-16384'
+	    curl.follow_location = true
+	    curl.perform
+        body = body + curl.body_str
     end
 
 
@@ -67,3 +59,4 @@ title_x('http://rjp.frottage.org/catsink.jpg')
 title_x('http://rjp.frottage.org/uaposts.png')
 title_x('http://frottage.org/mysql/manual.html')
 title_x('http://backup.frottage.org/rjp/env.cgi')
+title_x('http://theregister.co.uk/content/6/34549.html')
