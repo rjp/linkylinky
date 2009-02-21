@@ -42,5 +42,4 @@ def title_x(uri)
 end
 
 title_x('http://frottage.org/mysql/manual.html')
-#title_x('http://backup.frottage.org/rjp/tmp/big.log')
 title_x('http://backup.frottage.org/rjp/env.cgi')
