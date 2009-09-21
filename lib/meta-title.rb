@@ -5,6 +5,51 @@ require 'extractor'
 require 'tempfile'
 require 'curb'
 
+def make_nice_title(m)
+    m['mimetype'] ||= 'text/html'
+    p m
+    m.keys.each { |i|
+        m[i] = m[i].to_a.uniq.first
+    }
+    mimetype = m['mimetype'].downcase
+    majortype = mimetype.gsub(%r{^(.*?)/.*$},'\1')
+    def_title = "[#{mimetype}" << (m['size'] ? ', '<<m['size'] : '') << ']'
+    title = ''
+
+    case majortype
+        when 'image'
+           title = ''; post_model = ''; post_exposure = ''
+           if m['camera model'] then
+               title << m['camera model']
+               post_model = ', '
+           end
+           if m['focal length'] then
+               title << post_model << m['focal length']
+               post_focal = ', '
+               post_model = ''
+           end
+           if m['exposure'] then
+               title << post_model << post_focal << m['exposure']
+           end
+
+        when 'audio'
+           title = ''; pre_artist = ''; pre_album = ''
+           if m['title'] then
+               title << '"' << m['artist'] << '"'; pre_artist = ' by '; pre_album = ' off '
+           end
+           if m['artist'] then
+               title << pre_artist << m['artist']
+           end
+           if m['album'] then
+               title << pre_album << '"' << m['album'] << '"'
+           end
+        when 'text'
+            title = m['title']
+    end
+    p title
+    return title.length > 0 ? title : def_title
+end
+
 def title(uri)
     x=''
     open(uri, :progress_proc => lambda{|x|p x}) { |fh|
@@ -14,7 +59,7 @@ def title(uri)
     p x
 end
 
-def title_x(uri)
+def title_from_uri(uri)
     p uri
     real_size = -34
 
@@ -42,15 +87,25 @@ def title_x(uri)
         body = body + curl.body_str
     end
 
+    return title_from_text(body)
+end
 
+def title_from_text(text)
+    metadata = {}
     # write the body to a tempfile
     Tempfile.open('lnkylnky', '/tmp') { |t|
-        t.print body
+        t.print text
         t.flush
-        metadata = Extractor.extract(t.path)
-        p metadata
+        metadata = title_from_file(t.path)
         t.close!
     }
+    return metadata
+end
+
+def title_from_file(file)
+    m = Extractor.extract(file)
+    m['_meta_title'] = make_nice_title(m)
+    return m['_meta_title']
 end
 
 title_x('http://rjp.frottage.org/tmp/sorry.mp3')
