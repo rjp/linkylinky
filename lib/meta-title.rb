@@ -5,49 +5,58 @@ require 'extractor'
 require 'tempfile'
 require 'curb'
 
+$format_strings = {
+    'image' => [
+        ['camera model', nil, '', ', '],
+        ['focal length', nil, '', ', '],
+        ['exposure', nil, '', ', ']
+    ],
+    'audio' => [
+        ['title', '"__X__"', '', ''],
+        ['artist', nil, ' by ', ''],
+        ['album', '"__X__"', ' off ', ''],
+        ['year', nil, ', ', '']
+    ]
+}
+
+# key, formatter, prefix, postfix
+def format_list(m)
+    mimetype = m['mimetype'].downcase
+    majortype = mimetype.gsub(%r{^(.*?)/.*$},'\1')
+    def_title = "[#{mimetype}" << (m['size'] ? ', '<<m['size'] : '') << ']'
+
+    f = $format_strings[majortype]
+    if f.nil? then
+        return def_title
+    end
+
+    title = ''
+    added = 0
+    previous = ''
+    f.each { |k, fm, pr, po|
+        if m[k] then
+            if added == 1 then
+                title << previous
+            end
+            added = 1
+            x = m[k]
+            unless fm.nil? then x = fm.gsub('__X__', m[k]); end
+            title = title + pr + x
+            previous = po
+        end
+    }
+
+    return title.length > 0 ? title : def_title
+end
+
 def make_nice_title(m)
     m['mimetype'] ||= 'text/html'
     p m
     m.keys.each { |i|
         m[i] = m[i].to_a.uniq.first
     }
-    mimetype = m['mimetype'].downcase
-    majortype = mimetype.gsub(%r{^(.*?)/.*$},'\1')
-    def_title = "[#{mimetype}" << (m['size'] ? ', '<<m['size'] : '') << ']'
-    title = ''
 
-    case majortype
-        when 'image'
-           title = ''; post_model = ''; post_exposure = ''
-           if m['camera model'] then
-               title << m['camera model']
-               post_model = ', '
-           end
-           if m['focal length'] then
-               title << post_model << m['focal length']
-               post_focal = ', '
-               post_model = ''
-           end
-           if m['exposure'] then
-               title << post_model << post_focal << m['exposure']
-           end
-
-        when 'audio'
-           title = ''; pre_artist = ''; pre_album = ''
-           if m['title'] then
-               title << '"' << m['artist'] << '"'; pre_artist = ' by '; pre_album = ' off '
-           end
-           if m['artist'] then
-               title << pre_artist << m['artist']
-           end
-           if m['album'] then
-               title << pre_album << '"' << m['album'] << '"'
-           end
-        when 'text'
-            title = m['title']
-    end
-    p title
-    return title.length > 0 ? title : def_title
+    return format_list(m)
 end
 
 def title(uri)
