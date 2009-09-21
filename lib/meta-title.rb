@@ -27,10 +27,11 @@ $format_strings = {
 def format_list(m)
     m['mimetype'] ||= 'text/html'
     m.keys.each { |i|
-        m[i] = m[i].to_a.uniq.first
+        m[i] = m[i].to_a.uniq.first # because extractor is annoying
     }
     mimetype = m['mimetype'].downcase
-    majortype = mimetype.gsub(%r{^(.*?)/.*$},'\1')
+    majortype = mimetype.gsub(%r{^(.*?)/.*$},'\1') # major type
+    # rubbish default title but eh
     def_title = "[#{mimetype}" << (m['size'] ? ', '<<m['size'] : '') << ']'
 
     f = $format_strings[majortype]
