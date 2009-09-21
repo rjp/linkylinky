@@ -5,6 +5,7 @@ require 'extractor'
 require 'tempfile'
 require 'curb'
 
+# key, substitution formatting, prefix string, postfix string
 $format_strings = {
     'image' => [
         ['camera model', nil, '', ', '],
@@ -12,15 +13,22 @@ $format_strings = {
         ['exposure', nil, '', ', ']
     ],
     'audio' => [
-        ['title', '"__X__"', '', ''],
-        ['artist', nil, ' by ', ''],
-        ['album', '"__X__"', ' off ', ''],
+        ['title', '"__X__"', '', '', '[Unknown]'],
+        ['artist', nil, ' by ', ''], #, '[Unknown]'],
+        ['album', '"__X__"', ' off ', '', '[Unknown]'],
         ['year', nil, ', ', '']
+    ],
+    'text' => [
+        ['title', '"__X__"', '', '', '[No title]']
     ]
 }
 
 # key, formatter, prefix, postfix
 def format_list(m)
+    m['mimetype'] ||= 'text/html'
+    m.keys.each { |i|
+        m[i] = m[i].to_a.uniq.first
+    }
     mimetype = m['mimetype'].downcase
     majortype = mimetype.gsub(%r{^(.*?)/.*$},'\1')
     def_title = "[#{mimetype}" << (m['size'] ? ', '<<m['size'] : '') << ']'
@@ -33,17 +41,22 @@ def format_list(m)
     title = ''
     added = 0
     previous = ''
-    f.each { |k, fm, pr, po|
+    f.each { |k, fm, pr, po, default|
         if m[k] then
             if added == 1 then
-                title << previous
+                title = title + previous
             end
             added = 1
             x = m[k]
-            unless fm.nil? then x = fm.gsub('__X__', m[k]); end
-            title = title + pr + x
-            previous = po
+        else
+            x = default
         end
+        y = x
+        unless x.nil? then
+	        unless fm.nil? then y = fm.gsub('__X__', x); end
+	        title = title + pr + y
+        end
+        previous = po
     }
 
     return title.length > 0 ? title : def_title
@@ -51,7 +64,6 @@ end
 
 def make_nice_title(m)
     m['mimetype'] ||= 'text/html'
-    p m
     m.keys.each { |i|
         m[i] = m[i].to_a.uniq.first
     }
@@ -69,7 +81,6 @@ def title(uri)
 end
 
 def title_from_uri(uri)
-    p uri
     real_size = -34
 
     curl = Curl::Easy.new
@@ -84,7 +95,6 @@ def title_from_uri(uri)
             real_size = y[0][2]
         end
     }
-    puts real_size
 
     # some formats need the end of the file as well
     # small hardcoded list will do for now
@@ -116,15 +126,3 @@ def title_from_file(file)
     m['_meta_title'] = make_nice_title(m)
     return m['_meta_title']
 end
-
-#p title_from_uri('http://rjp.frottage.org/tmp/sorry.mp3')
-#p title_from_uri('http://rjp.frottage.org/tmp/theme2.mp3')
-#title_x('http://rjp.frottage.org/catsink.jpg')
-#p title_from_uri('http://rjp.frottage.org/uaposts.png')
-#p title_from_uri('http://frottage.org/mysql/manual.html')
-#title_x('http://backup.frottage.org/rjp/env.cgi')
-#p title_from_uri('http://theregister.co.uk/content/6/34549.html')
-p title_from_file('catsink.jpg')
-p title_from_file('IMG_4176.JPG')
-p title_from_file('04.mp3')
-p title_from_file('/cygdrive/d/movies/Farscape - S01E03 - Exodus From Genesis.avi')

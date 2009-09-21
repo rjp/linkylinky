@@ -1,0 +1,34 @@
+require 'uri-find'
+require 'test/unit'
+require 'meta-title'
+
+class TC_meta_title < Test::Unit::TestCase
+    @@files = [
+        ['catsink.jpg', "[image/jpeg]"],
+        ['IMG_4176.JPG', "Canon DIGITAL IXUS 65, 5.8 mm, 1/500 s"],
+        ['04.mp3', "\"Towards The Bare Hill\" by Efterklang off \"Under Giant Trees\", 2007"]
+    ]
+
+    @@uris = [
+        ['http://rjp.frottage.org/tmp/sorry.mp3', "\"Hard To Say I'm Sorry\" by Gregorian Chants off \"Auscultate\""],
+        ['http://rjp.frottage.org/tmp/theme2.mp3', "\"Theme II\" by Sabres of Paradise off \"Secret Tracks\", 1994"],
+        ['http://rjp.frottage.org/catsink.jpg', '[image/jpeg]'],
+        ['http://rjp.frottage.org/uaposts.png', "[image/png, 982x673]"],
+        ['http://frottage.org/mysql/manual.html', "\"MySQL Reference Manual for version 3.23.42.\""],
+        ['http://backup.frottage.org/rjp/env.cgi', "\"[No title]\""],
+        ['http://theregister.co.uk/content/6/34549.html', "\"Warning: lack of technology may harm your prospects \342\200\242 The Register\""]
+    ]
+
+    def test_from_file
+        @@files.each { |file, title|
+            assert_equal(title_from_file(file), title)
+        }
+    end
+
+    def test_from_uri
+        @@uris.each { |uri, title|
+            assert_equal(title_from_uri(uri), title)
+        }
+    end
+
+end
