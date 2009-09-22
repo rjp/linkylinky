@@ -3,6 +3,74 @@ require 'open-uri'
 require 'rubygems'
 require 'extractor'
 require 'tempfile'
+require 'curb'
+
+# key, substitution formatting, prefix string, postfix string
+$format_strings = {
+    'image' => [
+        ['camera model', nil, '', ', '],
+        ['focal length', nil, '', ', '],
+        ['exposure', nil, '', ', ']
+    ],
+    'audio' => [
+        ['title', '"__X__"', '', '', '[Unknown]'],
+        ['artist', nil, ' by ', ''], #, '[Unknown]'],
+        ['album', '"__X__"', ' off ', '', '[Unknown]'],
+        ['year', nil, ', ', '']
+    ],
+    'text' => [
+        ['title', '"__X__"', '', '', '[No title]']
+    ]
+}
+
+# key, formatter, prefix, postfix
+def format_list(m)
+    m['mimetype'] ||= 'text/html'
+    m.keys.each { |i|
+        m[i] = m[i].to_a.uniq.first # because extractor is annoying
+    }
+    mimetype = m['mimetype'].downcase
+    majortype = mimetype.gsub(%r{^(.*?)/.*$},'\1') # major type
+    # rubbish default title but eh
+    def_title = "[#{mimetype}" << (m['size'] ? ', '<<m['size'] : '') << ']'
+
+    f = $format_strings[majortype]
+    if f.nil? then
+        return def_title
+    end
+
+    title = ''
+    added = 0
+    previous = ''
+    f.each { |k, fm, pr, po, default|
+        if m[k] then
+            if added == 1 then
+                title = title + previous
+            end
+            added = 1
+            x = m[k]
+        else
+            x = default
+        end
+        y = x
+        unless x.nil? then
+	        unless fm.nil? then y = fm.gsub('__X__', x); end
+	        title = title + pr + y
+        end
+        previous = po
+    }
+
+    return title.length > 0 ? title : def_title
+end
+
+def make_nice_title(m)
+    m['mimetype'] ||= 'text/html'
+    m.keys.each { |i|
+        m[i] = m[i].to_a.uniq.first
+    }
+
+    return format_list(m)
+end
 
 def title(uri)
     x=''
@@ -13,58 +81,49 @@ def title(uri)
     p x
 end
 
-def title_x(uri)
-    p uri
-    puts "HEAD"
-    z = ''
-    url = URI.parse(uri)
-    req = Net::HTTP::Head.new(url.path)
-#    req.set_range(0, 119)
-    res = Net::HTTP.start(url.host, url.port) {|x|
-        x.request(req)
-    }
-    puts res.code
+def title_from_uri(uri)
+    real_size = -34
 
-    puts "GET"
-    req = Net::HTTP::Get.new(url.path)
-    req.set_range(0, 16383)
-    res = Net::HTTP.start(url.host, url.port) {|x|
-        x.request(req)
+    curl = Curl::Easy.new
+    curl.url = uri
+    curl.headers['Range'] = 'bytes=0-16383'
+    curl.follow_location = true
+    curl.perform
+    body = curl.body_str
+    curl.header_str.split(/\r\n/).grep(/^Content-Range/).each { |x|
+        y = x.scan(%r{^.*bytes (\d+)-(\d+)(?:/(\d+))?})
+        if y[0] and y[0][2] then
+            real_size = y[0][2]
+        end
     }
-    puts res.code
-    puts res.content_type
-    body = res.body
 
     # some formats need the end of the file as well
     # small hardcoded list will do for now
-    need_end = ['audio/mpeg'].grep res.content_type
+    need_end = ['audio/mpeg'].grep curl.content_type
     if need_end.size > 0 then
-	    puts "GET"
-	    req = Net::HTTP::Get.new(url.path)
-	    req.set_range(-16384)
-	    p req
-	    endres = Net::HTTP.start(url.host, url.port) {|x|
-	        x.request(req)
-	    }
-	    puts endres.code
-        body = body + endres.body
+	    curl.headers['Range'] = 'bytes=-16384'
+	    curl.follow_location = true
+	    curl.perform
+        body = body + curl.body_str
     end
 
-
-    # write the body to a tempfile
-    Tempfile.open('lnkylnky', '/tmp') { |t|
-        t.print body
-        t.flush
-        metadata = Extractor.extract(t.path)
-        p metadata
-        t.close!
-    }
+    return title_from_text(body)
 end
 
-title_x('http://rjp.frottage.org/tmp/sorry.mp3')
-title_x('http://rjp.frottage.org/tmp/theme2.mp3')
-title_x('http://rjp.frottage.org/catsink.jpg')
-title_x('http://rjp.frottage.org/uaposts.png')
-title_x('http://frottage.org/mysql/manual.html')
-title_x('http://backup.frottage.org/rjp/env.cgi')
-title_x('http://theregister.co.uk/content/6/34549.html')
+def title_from_text(text)
+    metadata = {}
+    # write the body to a tempfile
+    Tempfile.open('lnkylnky', '/tmp') { |t|
+        t.print text
+        t.flush
+        metadata = title_from_file(t.path)
+        t.close!
+    }
+    return metadata
+end
+
+def title_from_file(file)
+    m = Extractor.extract(file)
+    m['_meta_title'] = make_nice_title(m)
+    return m['_meta_title']
+end
