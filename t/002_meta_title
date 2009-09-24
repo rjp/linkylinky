@@ -37,7 +37,7 @@ class TC_meta_title < Test::Unit::TestCase
 
     def test_from_file
         @@files.each { |file, title|
-            assert_equal(title_from_file(file), title)
+            assert_equal(title_from_file("t/data/#{file}"), title)
         }
     end
 
