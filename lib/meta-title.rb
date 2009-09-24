@@ -8,6 +8,9 @@ require 'curb'
 require 'linkyplugin'
 include LinkyLinky
 
+# TODO make this not quite so hardcoded
+init_plugins('/home/rjp/git/linkylinky/lib/plugins')
+
 # key, substitution formatting, prefix string, postfix string
 $format_strings = {
     'image' => [
@@ -86,6 +89,17 @@ end
 
 def title_from_uri(uri)
     real_size = -34
+
+    # shortcut the fetching if we have a plugin that will handle this
+    Plugin.registered.each { |name, plugin|
+        t = nil
+        if plugin.accept(uri) then
+            t = plugin.title(uri)
+        end
+        unless t.nil? then
+            return t
+        end
+    }
 
     curl = Curl::Easy.new
     curl.url = uri
