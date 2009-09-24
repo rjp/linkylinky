@@ -5,6 +5,9 @@ require 'extractor'
 require 'tempfile'
 require 'curb'
 
+require 'linkyplugin'
+include LinkyLinky
+
 # key, substitution formatting, prefix string, postfix string
 $format_strings = {
     'image' => [
