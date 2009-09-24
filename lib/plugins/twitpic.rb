@@ -1,9 +1,12 @@
 require 'rubygems'
-require 'linkyplugin'
 require 'open-uri'
 require 'hpricot'
+require 'test/unit'
 
-class TwitpicPlugin < PluginBase
+require 'linkyplugin'
+include LinkyLinky
+
+Plugin.define "twitpic" do
     author "rjp"
     version "0.0.1"
     match_uri 'twitpic.com/.*'
@@ -24,5 +27,32 @@ class TwitpicPlugin < PluginBase
     end
 end
 
-a=TwitpicPlugin.new
-p a.title('http://twitpic.com/ixhuc')
+class TC_plugin_twitpic < Test::Unit::TestCase
+    def setup
+        if Plugin.registered.keys.size == 0 then
+            puts "loading plugins"
+            init_plugins('/home/rjp/git/linkylinky/lib/plugins')
+            assert_not_nil(Plugin.registered.keys)
+        end
+        @twitpic = Plugin.registered['twitpic']
+    end
+
+    def test_twitpic
+        assert_not_nil(@twitpic)
+        assert_respond_to(@twitpic, 'title')
+        assert_respond_to(@twitpic, 'author')
+        assert_respond_to(@twitpic, 'match_uri')
+        assert_respond_to(@twitpic, 'negative_match_uri')
+    end
+
+    def test_twitpic_accept
+        assert_equal(@twitpic.accept('twitpic.com/zippy'), 1)
+        assert_equal(@twitpic.accept('twitpic.com/api.do'), 0)
+    end
+
+    def test_twitpic_online
+        return unless ENV['LL_ONLINE']
+
+        assert_not_nil(@twitpic.title('http://www.twitpic.com/ixhuc'))
+    end
+end
