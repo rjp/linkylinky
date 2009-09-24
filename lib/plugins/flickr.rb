@@ -12,7 +12,7 @@ Plugin.define "flickr" do
     match_uri 'flickr.com/photos/(.*?)/(.+)'
 
     def title(uri)
-        uri =~ Regexp.new(FlickrPlugin.match_uri)
+        uri =~ Regexp.new(@match_uri)
         realname = "<x#{$1}>"
         doc = Hpricot(open(uri))
 
