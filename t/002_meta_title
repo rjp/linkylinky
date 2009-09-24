@@ -1,6 +1,15 @@
 require 'uri-find'
 require 'test/unit'
 require 'meta-title'
+require 'open-uri'
+
+require 'linkyplugin'
+include LinkyLinky
+
+# additional tests exist in the plugins
+require 'plugins/flickr'
+require 'plugins/twitter'
+require 'plugins/twitpic'
 
 class TC_meta_title < Test::Unit::TestCase
     @@files = [
@@ -19,6 +28,13 @@ class TC_meta_title < Test::Unit::TestCase
         ['http://theregister.co.uk/content/6/34549.html', "\"Warning: lack of technology may harm your prospects \342\200\242 The Register\""]
     ]
 
+    def setup
+        if Plugin.registered.keys.size == 0 then
+            init_plugins('/home/rjp/git/linkylinky/lib/plugins')
+            assert_not_nil(Plugin.registered.keys)
+        end
+    end
+
     def test_from_file
         @@files.each { |file, title|
             assert_equal(title_from_file(file), title)
@@ -26,9 +42,16 @@ class TC_meta_title < Test::Unit::TestCase
     end
 
     def test_from_uri
+        return 0
         @@uris.each { |uri, title|
             assert_equal(title_from_uri(uri), title)
         }
     end
 
+    def test_accept
+        # all plugins should reject sexweasels
+        Plugin.registered.each { |k, v|
+            assert_equal(v.accept('sexweasel.net/sexy_weasels.php'), 0)
+        }
+    end
 end
