@@ -51,7 +51,7 @@ class TC_meta_title < Test::Unit::TestCase
     def test_accept
         # all plugins should reject sexweasels
         Plugin.registered.each { |k, v|
-            assert_equal(v.accept('sexweasel.net/sexy_weasels.php'), 0)
+            assert_equal(false, v.accept('sexweasel.net/sexy_weasels.php'))
         }
     end
 end
