@@ -13,11 +13,17 @@ Plugin.define "flickr" do
 
     def title(uri)
         uri =~ Regexp.new(@match_uri)
-        realname = "<x#{$1}>"
+        realname = "<#{$1}>"
         doc = Hpricot(open(uri))
-
         entry = doc.at('meta[@name="title"]')
-        title = entry['content']
+
+        if entry then
+            title = entry['content']
+        else # did we get bounced to a login page?
+            if doc.at('title').inner_text =~ /Sign in/ then
+                return "(flickr) #{realname}: Protected Photo, sorry"
+            end
+        end
 
         doc.search("b[@property]").each {|i|
             if i['property'] == 'foaf:name' then

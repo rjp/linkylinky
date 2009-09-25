@@ -8,6 +8,16 @@ require 'curb'
 require 'linkyplugin'
 include LinkyLinky
 
+# OpenURI doesn't allow http->https redirection by default
+def OpenURI.redirectable?(uri1, uri2) # :nodoc:
+    # This test is intended to forbid a redirection from http://... to
+    # file:///etc/passwd.
+    # However this is ad hoc.  It should be extensible/configurable.
+    uri1.scheme.downcase == uri2.scheme.downcase ||
+    (/\A(?:http|ftp|https)\z/i =~ uri1.scheme && /\A(?:http|ftp|https)\z/i =~
+uri2.scheme)
+end
+
 # TODO make this not quite so hardcoded
 puts "loading plugins"
 init_plugins('/home/rjp/git/linkylinky/lib/plugins')
@@ -104,6 +114,7 @@ def title_from_uri(uri)
     curl = Curl::Easy.new
     curl.url = uri
     curl.headers['Range'] = 'bytes=0-16383'
+    curl.headers['User-Agent'] = 'Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 6.0)'
     curl.follow_location = true
     curl.perform
     body = curl.body_str
