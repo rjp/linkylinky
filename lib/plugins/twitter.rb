@@ -9,12 +9,21 @@ include LinkyLinky
 Plugin.define "twitter" do
     author "rjp"
     version "0.0.1"
-    match_uri 'twitter.com/(.*?)/status/(.+)'
+    match_uri 'twitter.com/(.*?)/status(es)?/(.+)'
 
     def title(uri)
+    puts "isn't it?"
         doc = Hpricot(open(uri))
-        entry = doc.at('span.entry-content').inner_text
-        realname = doc.at('div.full-name').inner_text
+        el_entry = doc.at('span.entry-content') #.inner_text
+        entry = el_entry.inner_text
+        realname = ''
+        el_name = doc.at('div.full-name') #.inner_text
+        if el_name.nil? then
+            el_name = doc.at('div > a.screen-name')
+            realname = "@#{el_name.inner_text}"
+        else
+            realname = el_name.inner_text
+        end
 
         return "(twitter) #{realname}: #{entry}"
     end
