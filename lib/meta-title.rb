@@ -9,7 +9,9 @@ require 'linkyplugin'
 include LinkyLinky
 
 # TODO make this not quite so hardcoded
+puts "loading plugins"
 init_plugins('/home/rjp/git/linkylinky/lib/plugins')
+puts "Loaded: " + Plugin.registered.keys.join(', ')
 
 # key, substitution formatting, prefix string, postfix string
 $format_strings = {
@@ -38,7 +40,7 @@ def format_list(m)
     mimetype = m['mimetype'].downcase
     majortype = mimetype.gsub(%r{^(.*?)/.*$},'\1') # major type
     # rubbish default title but eh
-    def_title = "[#{mimetype}" << (m['size'] ? ', '<<m['size'] : '') << ']'
+    def_title = "[" + mimetype + (m['size'] ? ', ' + m['size'] : '') + "]"
 
     f = $format_strings[majortype]
     if f.nil? then
@@ -92,12 +94,10 @@ def title_from_uri(uri)
 
     # shortcut the fetching if we have a plugin that will handle this
     Plugin.registered.each { |name, plugin|
+        puts "testing #{uri} against #{name}"
         t = nil
         if plugin.accept(uri) then
-            t = plugin.title(uri)
-        end
-        unless t.nil? then
-            return t
+            return plugin.title(uri), true
         end
     }
 
