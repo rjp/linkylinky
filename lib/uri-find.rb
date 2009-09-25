@@ -5,7 +5,7 @@ def rule(text, schemes = nil)
     uris = []
     URI.extract(text, schemes) { |uri|
         u = URI.parse(uri.gsub(/^URL:/, '').gsub(/,$/, ''))
-        uris.push u.normalize.to_s
+        uris.push [u.normalize.to_s, u]
     }
     return uris
 end
