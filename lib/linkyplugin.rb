@@ -27,19 +27,22 @@ class Plugin
     end
 
     def accept(uri)
-        allowed = 0
+        allowed = false
 
         unless @match_uri.nil? then
+            puts "#{uri} =~ #{@match_uri}"
             if uri.match(Regexp.new(@match_uri)) then
-                allowed = 1
+                allowed = true
             end
         end
         unless @negative_match_uri.nil? then
+            puts "#{uri} =~ #{@negative_match_uri}"
             if uri.match(Regexp.new(@negative_match_uri)) then
-                allowed = 0
+                allowed = false
             end
         end
 
+        puts "#{uri} => #{self.class} => #{allowed}"
         return allowed
     end
 
