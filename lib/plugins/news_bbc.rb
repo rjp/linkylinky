@@ -13,7 +13,8 @@ Plugin.define "newsbbc" do
 
     def postfilter(title)
 # <title>BBC NEWS | World | Europe | 'Two bodies' on mafia waste ship</title> 
-        return title.gsub(%r{^\s*BBC NEWS.*?\|.*?\|\s+}, '')
+        c = title.match(%r{^\s*BBC NEWS.*?\|.*?\|\s+(.+?)\s+\|\s+(.+)$})
+        return "#{c[2]} ((#{c[1]}))"
     end
 end
 
