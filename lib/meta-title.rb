@@ -37,7 +37,7 @@ $format_strings = {
         ['year', nil, ', ', '']
     ],
     'text' => [
-        ['title', '"__X__"', '', '', '[No title]']
+        ['title', '__X__', '', '', '[No title]']
     ]
 }
 
