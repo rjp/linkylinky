@@ -48,9 +48,9 @@ class TC_plugin_twitter < Test::Unit::TestCase
     end
 
     def test_twitter_accept
-        assert_equal(@twitter.accept('twitter.com/rjp/status/1234'), 1)
-        assert_equal(@twitter.accept('http://twitter.com/rjp/status/1234'), 1)
-        assert_equal(@twitter.accept('twitter.com/cock/weasel'), 0)
+        assert_equal(@twitter.accept('twitter.com/rjp/status/1234'), true)
+        assert_equal(@twitter.accept('http://twitter.com/rjp/statuses/1234'), true)
+        assert_equal(@twitter.accept('twitter.com/cock/weasel'), false)
     end
 
     def test_twitter_online

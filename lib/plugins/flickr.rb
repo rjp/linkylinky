@@ -54,8 +54,8 @@ class TC_plugin_flickr < Test::Unit::TestCase
     end
 
     def test_flickr_accept
-        assert_equal(@flickr.accept('flickr.com/photos/cock/weasel'), 1)
-        assert_equal(@flickr.accept('flickr.com/cock/weasel'), 0)
+        assert_equal(@flickr.accept('flickr.com/photos/cock/weasel'), true)
+        assert_equal(@flickr.accept('flickr.com/cock/weasel'), false)
     end
 
     def test_flickr_online

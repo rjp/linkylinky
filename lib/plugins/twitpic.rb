@@ -46,8 +46,8 @@ class TC_plugin_twitpic < Test::Unit::TestCase
     end
 
     def test_twitpic_accept
-        assert_equal(@twitpic.accept('twitpic.com/zippy'), 1)
-        assert_equal(@twitpic.accept('twitpic.com/api.do'), 0)
+        assert_equal(@twitpic.accept('twitpic.com/zippy'), true)
+        assert_equal(@twitpic.accept('twitpic.com/api.do'), false)
     end
 
     def test_twitpic_online
