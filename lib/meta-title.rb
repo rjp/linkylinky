@@ -101,13 +101,17 @@ end
 
 def title_from_uri(uri)
     real_size = -34
+    postfilter = nil
 
     # shortcut the fetching if we have a plugin that will handle this
     Plugin.registered.each { |name, plugin|
         puts "testing #{uri} against #{name}"
         t = nil
-        if plugin.accept(uri) then
-            return plugin.title(uri), true
+        case plugin.accept(uri)
+            when true
+                return plugin.title(uri), true
+            when :filter
+                postfilter = proc { plugin.postfilter }
         end
     }
 
@@ -135,7 +139,14 @@ def title_from_uri(uri)
         body = body + curl.body_str
     end
 
-    return title_from_text(body)
+    pre_filter = title_from_text(body)
+    unless postfilter.nil? then
+        puts "calling postfilter on #{pre_filter}"
+        pre_filter = postfilter.call(pre_filter)
+        puts "output from postfilter is #{pre_filter}"
+    end
+
+    return pre_filter
 end
 
 def title_from_text(text)

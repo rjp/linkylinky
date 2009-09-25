@@ -41,15 +41,26 @@ class Plugin
                 allowed = false
             end
         end
+        unless @filter_uri.nil? then
+            puts "#{uri} =~ #{@filter_uri}"
+            if uri.match(Regexp.new(@filter_uri)) then
+                allowed = :filter
+            end
+        end
 
         puts "#{uri} => #{self.class} => #{allowed}"
         return allowed
+    end
+
+    def title(uri)
+        return "<URI: #{uri} >"
     end
 
     extend PluginSugar
     def_field :author, :version
     def_field :match_host, :match_uri
     def_field :negative_match_uri
+    def_field :filter_uri
 end
 
 module LinkyLinky
