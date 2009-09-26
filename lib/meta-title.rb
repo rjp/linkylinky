@@ -111,7 +111,7 @@ def title_from_uri(uri)
             when true
                 return plugin.title(uri), true
             when :filter
-                postfilter = proc { plugin.postfilter }
+                postfilter = Proc.new { |i| plugin.postfilter(i) }
         end
     }
 
@@ -141,9 +141,7 @@ def title_from_uri(uri)
 
     pre_filter = title_from_text(body)
     unless postfilter.nil? then
-        puts "calling postfilter on #{pre_filter}"
         pre_filter = postfilter.call(pre_filter)
-        puts "output from postfilter is #{pre_filter}"
     end
 
     return pre_filter
