@@ -13,7 +13,8 @@ Plugin.define "newsbbc" do
 
     def postfilter(title)
 # <title>BBC NEWS | World | Europe | 'Two bodies' on mafia waste ship</title> 
-        c = title.match(%r{^\s*BBC NEWS.*?\|.*?\|\s+(.+?)\s+\|\s+(.+)$})
+# strip all but the last two sections, then invert them
+        c = title.match(%r{^.* \| (.*?) \| ([^|]+)})
         return "#{c[2]} ((#{c[1]}))"
     end
 end
@@ -42,6 +43,6 @@ class TC_plugin_newsbbc < Test::Unit::TestCase
     end
 
     def test_newsbbc_filter
-        assert_equal(@newsbbc.postfilter("BBC NEWS | World | Europe | 'Two bodies' on mafia waste ship"), "Europe | 'Two bodies' on mafia waste ship")
+        assert_equal(@newsbbc.postfilter("BBC NEWS | World | Europe | 'Two bodies' on mafia waste ship"), "'Two bodies' on mafia waste ship ((Europe))")
     end
 end
