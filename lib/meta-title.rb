@@ -99,68 +99,66 @@ def title(uri)
     p x
 end
 
+	def fetch(uri)
+	    curl = Curl::Easy.new
+	    curl.url = uri
+	    curl.headers['Range'] = 'bytes=0-16383'
+	    curl.headers['User-Agent'] = 'Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 6.0)'
+	    curl.follow_location = true
+	    curl.perform
+	    body = curl.body_str
+
+	# try to grab the real size of the content from the headers
+	    real_size = nil
+	    curl.header_str.split(/\r\n/).grep(/^Content-Range/).each { |x|
+            p "CR #{x}"
+	        y = x.scan(%r{^.*bytes (\d+)-(\d+)(?:/(\d+))?})
+	        if y[0] and y[0][2] then
+	            real_size = y[0][2]
+	        end
+	    }
+
+	    curl.header_str.split(/\r\n/).grep(/^Content-Length/).each { |x|
+	        y = x.scan(%r{^.*: (\d+)})
+            p "CL #{x} #{y[0].inspect}"
+	        if y[0] then
+	            real_size = y[0]
+	        end
+	    }
+
+
+	# always fetch the last 16k as well
+	    curl.headers['Range'] = 'bytes=-16384'
+	    curl.follow_location = true
+	    curl.perform
+	    body = body + curl.body_str
+
+	    return curl.content_type, real_size, body
+	end
+
 def title_from_uri(uri)
     real_size = -34
     postfilter = nil
 
-    # shortcut the fetching if we have a plugin that will handle this
+    # get initial triplet of information
+    type, size, body = fetch(uri)
+    puts "#{type} #{size} #{body.length}"
+
+    current = Plugin.registered['default']
+
+    # pick the highest priority plugin that'll handle this
     Plugin.registered.each { |name, plugin|
-        puts "testing #{uri} against #{name}"
-        t = nil
-        case plugin.accept(uri)
-            when true
-                return plugin.title(uri), true
-            when :filter
-                postfilter = Proc.new { |i| plugin.postfilter(i) }
+#        puts "testing #{uri} against #{name}"
+        if plugin.accept(uri, type) then
+            if plugin.priority > current.priority then
+                current = plugin
+            end
         end
     }
 
-    curl = Curl::Easy.new
-    curl.url = uri
-    curl.headers['Range'] = 'bytes=0-16383'
-    curl.headers['User-Agent'] = 'Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 6.0)'
-    curl.follow_location = true
-    curl.perform
-    body = curl.body_str
-    curl.header_str.split(/\r\n/).grep(/^Content-Range/).each { |x|
-        y = x.scan(%r{^.*bytes (\d+)-(\d+)(?:/(\d+))?})
-        if y[0] and y[0][2] then
-            real_size = y[0][2]
-        end
-    }
+    type, size, body = current.fetch(uri, type, size, body)
+    pre_title = current.title(uri, type, size, body)
+    title = current.postfilter(pre_title)
 
-    # some formats need the end of the file as well
-    # small hardcoded list will do for now
-    need_end = ['audio/mpeg'].grep curl.content_type
-    if need_end.size > 0 then
-	    curl.headers['Range'] = 'bytes=-16384'
-	    curl.follow_location = true
-	    curl.perform
-        body = body + curl.body_str
-    end
-
-    pre_filter = title_from_text(body)
-    unless postfilter.nil? then
-        pre_filter = postfilter.call(pre_filter)
-    end
-
-    return pre_filter
-end
-
-def title_from_text(text)
-    metadata = {}
-    # write the body to a tempfile
-    Tempfile.open('lnkylnky', '/tmp') { |t|
-        t.print text
-        t.flush
-        metadata = title_from_file(t.path)
-        t.close!
-    }
-    return metadata
-end
-
-def title_from_file(file)
-    m = Extractor.extract(file)
-    m['_meta_title'] = make_nice_title(m)
-    return m['_meta_title']
+    return title
 end

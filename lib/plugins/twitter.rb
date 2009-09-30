@@ -10,10 +10,14 @@ Plugin.define "twitter" do
     author "rjp"
     version "0.0.1"
     match_uri 'twitter.com/(.*?)/status(es)?/(.+)'
+    priority 5
 
-    def title(uri)
-    puts "isn't it?"
-        doc = Hpricot(open(uri))
+    def fetch(uri, type, size, body)
+        return self.fetch_all(uri, type, size, body)
+    end
+
+    def title(uri, type, size, body)
+        doc = Hpricot(body)
         el_entry = doc.at('span.entry-content') #.inner_text
         entry = el_entry.inner_text
         realname = ''

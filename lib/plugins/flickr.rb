@@ -10,11 +10,16 @@ Plugin.define "flickr" do
     author "rjp"
     version "0.0.1"
     match_uri 'flickr.com/photos/(.*?)/(.+)'
+    priority 5
 
-    def title(uri)
+    def fetch(uri, type, size, body)
+        self.fetch_all(uri, type, size, body)
+    end
+
+    def title(uri, type, size, body)
         uri =~ Regexp.new(@match_uri)
         realname = "<#{$1}>"
-        doc = Hpricot(open(uri))
+        doc = Hpricot(body)
         entry = doc.at('meta[@name="title"]')
 
         if entry then

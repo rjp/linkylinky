@@ -11,12 +11,17 @@ Plugin.define "twitpic" do
     version "0.0.1"
     match_uri 'twitpic.com/.*'
     negative_match_uri 'twitpic.com/.*\.do$'
+    priority 5
 
-    def title(uri)
+    def fetch(uri, type, size, body)
+        return self.fetch_all(uri, type, size, body)
+    end
+
+    def title(uri, type, size, body)
         realname = "<x#{$1}>"
         desc = 'x'
 
-        doc = Hpricot(open(uri))
+        doc = Hpricot(body)
 
         name = doc.at('div#view-photo-user > div#photo-info > div > a')
         realname = name.inner_text
