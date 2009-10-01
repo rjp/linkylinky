@@ -52,10 +52,10 @@ class TC_plugin_twitter < Test::Unit::TestCase
     end
 
     def test_twitter_accept
-        assert_equal(true, @twitter.accept('twitter.com/rjp/status/1234'))
-        assert_equal(true, @twitter.accept('http://twitter.com/rjp/statuses/1234'))
+        assert_equal(true, @twitter.accept('twitter.com/rjp/status/1234', 'text/html'))
+        assert_equal(true, @twitter.accept('http://twitter.com/rjp/statuses/1234', 'text/html'))
 # this plugin currently doesn't handle links to user timelines
-        assert_equal(false, @twitter.accept('twitter.com/weasel'))
+        assert_equal(false, @twitter.accept('twitter.com/weasel', 'text/html'))
     end
 
     def test_twitter_online

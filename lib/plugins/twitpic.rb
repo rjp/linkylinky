@@ -51,13 +51,15 @@ class TC_plugin_twitpic < Test::Unit::TestCase
     end
 
     def test_twitpic_accept
-        assert_equal(@twitpic.accept('twitpic.com/zippy'), true)
-        assert_equal(@twitpic.accept('twitpic.com/api.do'), false)
+        assert_equal(true, @twitpic.accept('twitpic.com/zippy', 'text/html'))
+        assert_equal(false, @twitpic.accept('twitpic.com/api.do', 'text/html'))
     end
 
     def test_twitpic_online
         return unless ENV['LL_ONLINE']
 
-        assert_not_nil(@twitpic.title('http://www.twitpic.com/ixhuc'))
+        a = @twitpic.fetch('http://www.twitpic.com/ixhuc', 'text/html', 1234, '')
+        assert_not_nil(a)
+        assert_not_nil(@twitpic.title(*a))
     end
 end

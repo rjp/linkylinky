@@ -13,6 +13,30 @@ module PluginSugar
   end
 end
 
+module LinkyLinky
+	def init_plugins(dir)
+	    Dir.glob(dir + '/*.rb').each { |rb| load rb }
+	end
+
+	def title_from_text(type, size, text)
+	    metadata = {}
+	    # write the body to a tempfile
+	    Tempfile.open('lnkylnky', '/tmp') { |t|
+	        t.print text
+	        t.flush
+	        metadata = title_from_file(t.path)
+	        t.close!
+	    }
+	    return metadata
+	end
+
+	def title_from_file(file)
+	    m = Extractor.extract(file)
+	    m['_meta_title'] = make_nice_title(m)
+	    return m['_meta_title']
+	end
+end
+
 class Plugin
     @registered = {}
     class << self
@@ -53,24 +77,6 @@ class Plugin
         return allowed
     end
 
-	def title_from_text(type, size, text)
-	    metadata = {}
-	    # write the body to a tempfile
-	    Tempfile.open('lnkylnky', '/tmp') { |t|
-	        t.print text
-	        t.flush
-	        metadata = title_from_file(t.path)
-	        t.close!
-	    }
-	    return metadata
-	end
-
-	def title_from_file(file)
-	    m = Extractor.extract(file)
-	    m['_meta_title'] = make_nice_title(m)
-	    return m['_meta_title']
-	end
-
     def title(uri, type, size, body)
         return title_from_text(type, size, body)
     end
@@ -92,6 +98,7 @@ class Plugin
         raise
     end
 
+    extend LinkyLinky
     extend PluginSugar
     def_field :author, :version
     def_field :match_host, :match_uri
@@ -100,8 +107,3 @@ class Plugin
     def_field :fetcher, :priority
 end
 
-module LinkyLinky
-	def init_plugins(dir)
-	    Dir.glob(dir + '/*.rb').each { |rb| load rb }
-	end
-end
