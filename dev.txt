@@ -1,0 +1,12 @@
+handlers = { pre => default.pre, title => default.title, post => default.post }
+
+plugins.each |i|
+  if i.accept(uri) then
+    handlers.merge i.handlers
+end
+
+io = handlers[pre].call(uri)
+pre_title = handlers[title].call(io)
+post_title = handlers[post].call(pre_title)
+
+return post_title

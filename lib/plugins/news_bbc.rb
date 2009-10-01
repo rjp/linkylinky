@@ -10,12 +10,13 @@ Plugin.define "newsbbc" do
     author "rjp"
     version "0.0.1"
     filter_uri 'news.bbc.co.uk'
+    priority 10
 
     def postfilter(title)
-# <title>BBC NEWS | World | Europe | 'Two bodies' on mafia waste ship</title> 
+# <title>BBC NEWS | World | Europe | 'Two bodies' on mafia waste ship</title>
 # strip all but the last two sections, then invert them
         c = title.match(%r{^.* \| (.*?) \| ([^|]+)})
-        return "#{c[2]} ((#{c[1]}))"
+        return "#{c[2]} (#{c[1]})"
     end
 end
 
@@ -38,11 +39,15 @@ class TC_plugin_newsbbc < Test::Unit::TestCase
     end
 
     def test_newsbbc_accept
-        assert_equal(@newsbbc.accept('newsbbc.com/photos/cock/weasel'), false)
-        assert_equal(@newsbbc.accept('newsbbc.com/cock/weasel'), false)
+#        assert_equal(@newsbbc.accept('newsbbc.com/photos/cock/weasel'), false)
+#        assert_equal(@newsbbc.accept('newsbbc.com/cock/weasel'), false)
+        assert_equal(true, @newsbbc.accept('news.bbc.co.uk/story/1/moose.stm', 'text/html'))
     end
 
     def test_newsbbc_filter
-        assert_equal(@newsbbc.postfilter("BBC NEWS | World | Europe | 'Two bodies' on mafia waste ship"), "'Two bodies' on mafia waste ship ((Europe))")
+        assert_equal(
+                "'Two bodies' on mafia waste ship (Europe)",
+                @newsbbc.postfilter("BBC NEWS | World | Europe | 'Two bodies' on mafia waste ship")
+        )
     end
 end

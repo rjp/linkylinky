@@ -37,7 +37,7 @@ class TC_meta_title < Test::Unit::TestCase
 
     def test_from_file
         @@files.each { |file, title|
-            assert_equal(title_from_file("t/data/#{file}"), title)
+            assert_equal(title, LinkyLinky::title_from_file("t/data/#{file}"))
         }
     end
 
@@ -49,9 +49,9 @@ class TC_meta_title < Test::Unit::TestCase
     end
 
     def test_accept
-        # all plugins should reject sexweasels
+        # all plugins should reject sexweasels and/or made-up mimetypes
         Plugin.registered.each { |k, v|
-            assert_equal(false, v.accept('sexweasel.net/sexy_weasels.php'))
+            assert_equal(false, v.accept('sexweasel.net/sexy_weasels.php', 'mime/type'))
         }
     end
 end

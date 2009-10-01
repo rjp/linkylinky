@@ -10,11 +10,16 @@ Plugin.define "flickr" do
     author "rjp"
     version "0.0.1"
     match_uri 'flickr.com/photos/(.*?)/(.+)'
+    priority 5
 
-    def title(uri)
+    def fetch(uri, type, size, body)
+        self.fetch_all(uri, type, size, body)
+    end
+
+    def title(uri, type, size, body)
         uri =~ Regexp.new(@match_uri)
         realname = "<#{$1}>"
-        doc = Hpricot(open(uri))
+        doc = Hpricot(body)
         entry = doc.at('meta[@name="title"]')
 
         if entry then
@@ -54,14 +59,19 @@ class TC_plugin_flickr < Test::Unit::TestCase
     end
 
     def test_flickr_accept
-        assert_equal(@flickr.accept('flickr.com/photos/cock/weasel'), true)
-        assert_equal(@flickr.accept('flickr.com/cock/weasel'), false)
+        assert_equal(true, @flickr.accept('flickr.com/photos/monkey/weasel', 'text/html'))
+        assert_equal(false, @flickr.accept('flickr.com/monkey/weasel', 'text/html'))
     end
 
     def test_flickr_online
         return unless ENV['LL_ONLINE']
 
-        assert_not_nil(@flickr.title('http://www.flickr.com/photos/8279638@N05/3877512686/'))
-        assert_not_nil(@flickr.title('http://www.flickr.com/photos/eric_parey/3877173831/'))
+        a = @flickr.fetch('http://www.flickr.com/photos/8279638@N05/3877512686/', 'text/html', 1234, '') 
+        assert_not_nil(a)
+        assert_not_nil(@flickr.title(*a))
+
+        a = @flickr.fetch('http://www.flickr.com/photos/eric_parey/3877173831/', 'text/html', 1234, '')
+        assert_not_nil(a)
+        assert_not_nil(@flickr.title(*a))
     end
 end
