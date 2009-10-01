@@ -30,25 +30,25 @@ class Plugin
         allowed = false
 
         unless @match_uri.nil? then
-            puts "#{uri} =~ #{@match_uri}"
+#        puts "#{uri} =~ #{@match_uri}"
             if uri.match(Regexp.new(@match_uri)) then
                 allowed = true
             end
         end
         unless @negative_match_uri.nil? then
-            puts "#{uri} =~ #{@negative_match_uri}"
+#            puts "#{uri} =~ #{@negative_match_uri}"
             if uri.match(Regexp.new(@negative_match_uri)) then
                 allowed = false
             end
         end
         unless @filter_uri.nil? then
-            puts "#{uri} =~ #{@filter_uri}"
+#            puts "#{uri} =~ #{@filter_uri}"
             if uri.match(Regexp.new(@filter_uri)) then
                 allowed = :filter
             end
         end
 
-        puts "#{uri} => #{self.class} => #{allowed}"
+#        puts "#{uri} => #{self.class} => #{allowed}"
         return allowed
     end
 

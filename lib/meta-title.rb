@@ -105,22 +105,30 @@ def title_from_uri(uri)
 
     # shortcut the fetching if we have a plugin that will handle this
     Plugin.registered.each { |name, plugin|
-        puts "testing #{uri} against #{name}"
         t = nil
         case plugin.accept(uri)
             when true
                 return plugin.title(uri), true
             when :filter
+                puts "POSTFILTER FOR #{name}"
                 postfilter = Proc.new { |i| plugin.postfilter(i) }
         end
     }
+puts "no plugin claimed [#{uri}]"
 
     curl = Curl::Easy.new
     curl.url = uri
     curl.headers['Range'] = 'bytes=0-16383'
     curl.headers['User-Agent'] = 'Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 6.0)'
     curl.follow_location = true
-    curl.perform
+    puts "curling"
+    begin
+        curl.perform
+    rescue => e
+        puts e
+        exit
+    end
+    puts "curled"
     body = curl.body_str
     curl.header_str.split(/\r\n/).grep(/^Content-Range/).each { |x|
         y = x.scan(%r{^.*bytes (\d+)-(\d+)(?:/(\d+))?})
@@ -128,6 +136,8 @@ def title_from_uri(uri)
             real_size = y[0][2]
         end
     }
+
+    puts "got #{body.size} bytes"
 
     # some formats need the end of the file as well
     # small hardcoded list will do for now
@@ -140,11 +150,13 @@ def title_from_uri(uri)
     end
 
     pre_filter = title_from_text(body)
+    puts "pre title = #{pre_filter}"
     unless postfilter.nil? then
         pre_filter = postfilter.call(pre_filter)
+        puts "updating title with postfilter => #{pre_filter}"
     end
 
-    return pre_filter
+    return pre_filter.strip
 end
 
 def title_from_text(text)

@@ -2,6 +2,9 @@ require 'rubygems'
 require 'open-uri'
 require 'hpricot'
 require 'test/unit'
+require 'uri-find'
+require 'json'
+require 'cgi'
 
 require 'linkyplugin'
 include LinkyLinky
@@ -23,6 +26,17 @@ Plugin.define "twitter" do
             realname = "@#{el_name.inner_text}"
         else
             realname = el_name.inner_text
+        end
+    
+        urls = rule(msg.body, 'http')
+        urls.each do |url|
+            uri = url[0]
+            json = open("http://api.longurl.org/v2/expand?url=" + CGI.escape(uri)
+            begin
+                data = JSON.load(json)
+                entry.gsub!(uri, data['long-url'])
+            rescue
+            end
         end
 
         return "(twitter) #{realname}: #{entry}"
