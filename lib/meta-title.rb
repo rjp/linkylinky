@@ -156,8 +156,8 @@ def title_from_uri(uri)
         end
     }
 
-    type, size, body = current.fetch(uri, type, size, body)
-    pre_title = current.title(uri, type, size, body)
+    new_uri, type, size, body = current.fetch(uri, type, size, body)
+    pre_title = current.title(new_uri, type, size, body)
     title = current.postfilter(pre_title)
 
     return title

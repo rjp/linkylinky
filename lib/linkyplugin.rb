@@ -80,14 +80,14 @@ class Plugin
     end
 
     def fetch(uri, type, size, body)
-        return type, size, body
+        return uri, type, size, body
     end
 
     def fetch_all(uri, type, size, body)
         io = open(uri)
         if io.status[0] == '200' then
             doc = io.read
-            return 'text/html', doc.length, doc
+            return uri, 'text/html', doc.length, doc
         end
         raise
     end
