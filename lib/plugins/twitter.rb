@@ -14,6 +14,7 @@ Plugin.define "twitter" do
     version "0.0.1"
     match_uri 'twitter.com/(.*?)/status(es)?/(.+)'
     priority 5
+    suppress_domain true
 
     def fetch(uri, type, size, body)
         return self.fetch_all(uri, type, size, body)

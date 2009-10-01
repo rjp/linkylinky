@@ -11,6 +11,7 @@ Plugin.define "flickr" do
     version "0.0.1"
     match_uri 'flickr.com/photos/(.*?)/(.+)'
     priority 5
+    suppress_domain true
 
     def fetch(uri, type, size, body)
         self.fetch_all(uri, type, size, body)

@@ -97,12 +97,16 @@ class Plugin
         raise
     end
 
+    def suppress_domain
+        return false
+    end
+
     extend LinkyLinky
     extend PluginSugar
     def_field :author, :version
     def_field :match_host, :match_uri
     def_field :negative_match_uri
-    def_field :filter_uri
+    def_field :filter_uri, :suppress_domain
     def_field :fetcher, :priority
 end
 

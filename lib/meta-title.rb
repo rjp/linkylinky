@@ -164,7 +164,7 @@ def title_from_uri(uri)
 
     new_uri, type, size, body = current.fetch(uri, type, size, body)
     pre_title = current.title(new_uri, type, size, body)
-    title = current.postfilter(pre_title)
+    title = current.postfilter(pre_title.strip)
 
-    return title
+    return title.strip, current.suppress_domain
 end
