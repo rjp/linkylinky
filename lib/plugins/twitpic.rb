@@ -12,6 +12,7 @@ Plugin.define "twitpic" do
     match_uri 'twitpic.com/.*'
     negative_match_uri 'twitpic.com/.*\.do$'
     priority 5
+    suppress_domain true
 
     def fetch(uri, type, size, body)
         return self.fetch_all(uri, type, size, body)

@@ -101,7 +101,8 @@ def title(uri)
 end
 
 	def fetch(uri)
-    p uri
+        content_type = nil
+
 	    curl = Curl::Easy.new
 	    curl.url = uri
 	    curl.headers['Range'] = 'bytes=0-16383'
@@ -128,14 +129,17 @@ end
 	        end
 	    }
 
+    content_type = curl.content_type
 
 	# always fetch the last 16k as well
+    unless ['image/png'].index(content_type) then
 	    curl.headers['Range'] = 'bytes=-16384'
 	    curl.follow_location = true
 	    curl.perform
 	    body = body + curl.body_str
+    end
 
-	    return curl.content_type, real_size, body
+	    return content_type, real_size, body
 	end
 
 def title_from_uri(uri)
@@ -160,7 +164,7 @@ def title_from_uri(uri)
 
     new_uri, type, size, body = current.fetch(uri, type, size, body)
     pre_title = current.title(new_uri, type, size, body)
-    title = current.postfilter(pre_title)
+    title = current.postfilter(pre_title.strip)
 
-    return title
+    return title.strip, current.suppress_domain
 end
