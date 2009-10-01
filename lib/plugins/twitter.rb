@@ -32,13 +32,16 @@ Plugin.define "twitter" do
             realname = el_name.inner_text
         end
     
-        urls = rule(msg.body, 'http')
+        urls = rule(entry, 'http')
         urls.each do |url|
             uri = url[0]
-            json = open("http://api.longurl.org/v2/expand?url=" + CGI.escape(uri))
+            puts "LU: http://api.longurl.org/v2/expand?format=json;url=" + CGI.escape(uri)
+            json = open("http://api.longurl.org/v2/expand?format=json&url=" + CGI.escape(uri))
             begin
                 data = JSON.load(json)
-                entry.gsub!(uri, "#{uri} => #{data['long-url']}")
+                if data and data['long-url'] then
+                    entry.gsub!(uri, "[ #{uri} => #{data['long-url']} ]")
+                end
             end
         end
 
