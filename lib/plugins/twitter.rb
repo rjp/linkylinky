@@ -52,15 +52,22 @@ class TC_plugin_twitter < Test::Unit::TestCase
     end
 
     def test_twitter_accept
-        assert_equal(@twitter.accept('twitter.com/rjp/status/1234'), true)
-        assert_equal(@twitter.accept('http://twitter.com/rjp/statuses/1234'), true)
-        assert_equal(@twitter.accept('twitter.com/cock/weasel'), false)
+        assert_equal(true, @twitter.accept('twitter.com/rjp/status/1234'))
+        assert_equal(true, @twitter.accept('http://twitter.com/rjp/statuses/1234'))
+# this plugin currently doesn't handle links to user timelines
+        assert_equal(false, @twitter.accept('twitter.com/weasel'))
     end
 
     def test_twitter_online
         return unless ENV['LL_ONLINE']
 
-        assert_not_nil(@twitter.title('http://twitter.com/crickybo/status/4126965179'))
-        assert_not_nil(@twitter.title('http://twitter.com/otama23/status/4337424688'))
+        [
+            'http://twitter.com/otama23/status/4337424688',
+            'http://twitter.com/crickybo/status/4126965179'
+        ].each { |uri|
+	        a = @twitter.fetch(uri, 'text/html', 1234, '') 
+	        assert_not_nil(a)
+	        assert_not_nil(@twitter.title(*a))
+        }
     end
 end
