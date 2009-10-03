@@ -14,13 +14,16 @@ module PluginSugar
 end
 
 module LinkyLinky
+    # load our plugins from a specified directory
 	def init_plugins(dir)
 	    Dir.glob(dir + '/*.rb').each { |rb| load rb }
 	end
 
+    # parse out a title from some text
 	def title_from_text(type, size, text)
 	    metadata = {}
-	    # write the body to a tempfile
+        # Extractor::extract only works on real files
+	    # write the text to a tempfile so it can be extracted
 	    Tempfile.open('lnkylnky', '/tmp') { |t|
 	        t.print text
 	        t.flush
@@ -30,6 +33,7 @@ module LinkyLinky
 	    return metadata
 	end
 
+    # extract and format metadata from a file
 	def title_from_file(file)
 	    m = Extractor.extract(file)
 	    m['_meta_title'] = make_nice_title(m)
@@ -51,23 +55,22 @@ class Plugin
         Plugin.registered[name] = p
     end
 
+    # default accept routine
+    # plugin will accept a URI if @match_uri or @filter_uri matches and @negative_match_uri doesn't
     def accept(uri, type)
         allowed = false
 
         unless @match_uri.nil? then
-#        puts "#{uri} =~ #{@match_uri}"
             if uri.match(Regexp.new(@match_uri)) then
                 allowed = true
             end
         end
         unless @negative_match_uri.nil? then
-#            puts "#{uri} =~ #{@negative_match_uri}"
             if uri.match(Regexp.new(@negative_match_uri)) then
                 allowed = false
             end
         end
         unless @filter_uri.nil? then
-#            puts "#{uri} =~ #{@filter_uri}"
             if uri.match(Regexp.new(@filter_uri)) then
                 allowed = true
             end
@@ -76,18 +79,22 @@ class Plugin
         return allowed
     end
 
+    # abstract title method just returns the default formatted metadata
     def title(uri, type, size, body)
         return title_from_text(type, size, body)
     end
 
+    # abstract postfilter method does nothing
     def postfilter(title)
         return title
     end
 
+    # abstract fetch method returns the results of the pre-fetch
     def fetch(uri, type, size, body)
         return uri, type, size, body
     end
 
+    # helper fetch_all method for plugins like twitter/flickr/twitpic
     def fetch_all(uri, type, size, body)
         io = open(uri)
         if io.status[0] == '200' then
