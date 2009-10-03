@@ -111,9 +111,11 @@ end
 	    curl.perform
 	    body = curl.body_str
 
+        resp_header = curl.header_str.split(/\r\n/)
+
 	# try to grab the real size of the content from the headers
 	    real_size = nil
-	    curl.header_str.split(/\r\n/).grep(/^Content-Range/).each { |x|
+	    resp_header.grep(/^Content-Range/).each { |x|
             p "CR #{x}"
 	        y = x.scan(%r{^.*bytes (\d+)-(\d+)(?:/(\d+))?})
 	        if y[0] and y[0][2] then
@@ -121,7 +123,7 @@ end
 	        end
 	    }
 
-	    curl.header_str.split(/\r\n/).grep(/^Content-Length/).each { |x|
+	    resp_header.grep(/^Content-Length/).each { |x|
 	        y = x.scan(%r{^.*: (\d+)})
             p "CL #{x} #{y[0].inspect}"
 	        if y[0] then
@@ -131,8 +133,16 @@ end
 
     content_type = curl.content_type
 
-	# always fetch the last 16k as well
-    unless ['image/png'].index(content_type) then
+    enc = nil
+	curl.header_str.split(/\r\n/).grep(/^Content-Encoding/).each { |x|
+        enc = x
+    }
+    if not enc.nil? and enc =~ /deflate|gzip/i then
+        body = Zlib::Inflate.inflate(body)
+    end
+
+	# always fetch the last 16k as well if we're not a png and we're not encoded
+    if enc.nil? and not ['image/png'].index(content_type) then
 	    curl.headers['Range'] = 'bytes=-16384'
 	    curl.follow_location = true
 	    curl.perform
