@@ -15,7 +15,10 @@ Plugin.define "newsbbc" do
     def postfilter(title)
 # <title>BBC NEWS | World | Europe | 'Two bodies' on mafia waste ship</title>
 # strip all but the last two sections, then invert them
-        c = title.match(%r{^.* \| (.*?) \| ([^|]+)})
+        c = title.match(%r{^.* \W (.*?) \W ([^|]+)})
+        if c.nil? then
+            return title # default to not crashing, eh?
+        end
         return "#{c[2]} (#{c[1]})"
     end
 end
